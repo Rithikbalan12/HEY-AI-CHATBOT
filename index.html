@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEY AI - Your Intelligence Hub</title>
+    
+    <!-- Meta SEO Tags -->
+    <meta name="description" content="HEY AI is a premium, secure, and modern ChatGPT-style conversational platform built to elevate your productivity.">
+    <meta name="theme-color" content="#0b0c10">
+    
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app-container">
+        
+        <!-- ========================================== -->
+        <!-- 1. AUTHENTICATION OVERLAY                  -->
+        <!-- ========================================== -->
+        <div id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-card-title">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-logo">H</div>
+                    <h1 id="auth-card-title" class="auth-title">HEY AI</h1>
+                    <p class="auth-subtitle">Elevate your conversations with intelligence</p>
+                </div>
+                
+                <div class="auth-tabs" role="tablist">
+                    <button id="tab-login" class="auth-tab active" role="tab" aria-selected="true" onclick="auth.switchTab('login')">Log In</button>
+                    <button id="tab-signup" class="auth-tab" role="tab" aria-selected="false" onclick="auth.switchTab('signup')">Sign Up</button>
+                </div>
+                
+                <div id="auth-error-box" class="auth-error">
+                    <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
+                    <span id="auth-error-msg">Invalid credentials</span>
+                </div>
+                
+                <form id="auth-form" onsubmit="auth.handleSubmit(event)">
+                    <div class="auth-form-group">
+                        <label for="auth-username" class="auth-form-label">Username</label>
+                        <div class="auth-input-wrapper">
+                            <i data-lucide="user" class="auth-input-icon"></i>
+                            <input type="text" id="auth-username" class="auth-input" placeholder="Enter your username" required autocomplete="username">
+                        </div>
+                    </div>
+                    
+                    <div class="auth-form-group">
+                        <label for="auth-password" class="auth-form-label">Password</label>
+                        <div class="auth-input-wrapper">
+                            <i data-lucide="lock" class="auth-input-icon"></i>
+                            <input type="password" id="auth-password" class="auth-input" placeholder="Enter your password" required autocomplete="current-password">
+                            <button type="button" class="auth-input-toggle" onclick="auth.togglePasswordVisibility('auth-password')" aria-label="Toggle password visibility">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="auth-confirm-group" class="auth-form-group" style="display: none;">
+                        <label for="auth-password-confirm" class="auth-form-label">Confirm Password</label>
+                        <div class="auth-input-wrapper">
+                            <i data-lucide="lock" class="auth-input-icon"></i>
+                            <input type="password" id="auth-password-confirm" class="auth-input" placeholder="Confirm your password" autocomplete="new-password">
+                            <button type="button" class="auth-input-toggle" onclick="auth.togglePasswordVisibility('auth-password-confirm')" aria-label="Toggle password visibility">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
+                        <span>Log In</span>
+                        <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 2. SIDEBAR NAVIGATION                      -->
+        <!-- ========================================== -->
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="ui.toggleSidebar(false)"></div>
+        <aside id="sidebar" aria-label="Conversation Sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="sidebar-brand-icon">H</div>
+                    <span>HEY AI</span>
+                </div>
+            </div>
+            
+            <button class="new-chat-btn" onclick="chat.startNewChat()">
+                <i data-lucide="plus-circle"></i>
+                <span>New Chat</span>
+            </button>
+            
+            <nav class="history-container" aria-label="Chat History">
+                <div class="history-section-title">Conversations</div>
+                <div id="chat-history-list" class="history-list">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </nav>
+            
+            <div class="sidebar-profile">
+                <div class="profile-info">
+                    <div id="profile-avatar-char" class="profile-avatar">U</div>
+                    <div class="profile-details">
+                        <div id="profile-username" class="profile-name">Username</div>
+                        <div class="profile-status">
+                            <div class="profile-status-dot"></div>
+                            <span>Online</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="profile-btn" onclick="ui.openSettings()" aria-label="Settings">
+                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <button class="profile-btn" onclick="auth.logout()" aria-label="Log out">
+                        <i data-lucide="log-out" style="width: 18px; height: 18px;"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ========================================== -->
+        <!-- 3. CHAT DISPLAY & INPUT AREA               -->
+        <!-- ========================================== -->
+        <main id="chat-area" aria-label="Chat Area">
+            <header class="chat-header">
+                <button class="mobile-nav-btn" onclick="ui.toggleSidebar(true)" aria-label="Open sidebar">
+                    <i data-lucide="menu"></i>
+                </button>
+                
+                <div class="header-title-container">
+                    <span id="chat-header-title" class="header-chat-title">New Chat</span>
+                    <span id="chat-header-model" class="header-model-badge">Demo Mode</span>
+                </div>
+                
+                <div class="header-actions">
+                    <button id="export-chat-btn" class="header-btn" onclick="chat.exportChat()" title="Export chat as Markdown" style="display: none;">
+                        <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+                        <span style="font-size: 13px;">Export</span>
+                    </button>
+                    <button class="header-btn" onclick="ui.openSettings()" title="API Key & Model Preferences">
+                        <i data-lucide="sliders" style="width: 18px; height: 18px;"></i>
+                        <span style="font-size: 13px;">Configure API</span>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Chat scroll block -->
+            <div id="chat-thread" class="chat-thread-container">
+                <!-- Welcome instructions when empty -->
+                <div id="welcome-container" class="chat-welcome-container">
+                    <div class="welcome-logo">H</div>
+                    <h2 class="welcome-title">How can I help you today?</h2>
+                    <p class="welcome-subtitle">Ask any question, brainstorm ideas, generate code snippets, or analyze problems. HEY AI is configured and ready.</p>
+                    
+                    <div class="welcome-suggestions">
+                        <div class="suggestion-card" onclick="chat.useSuggestion('Write a clean JavaScript debounce function with clear annotations.')">
+                            <span class="suggestion-text">Write a JavaScript debounce function</span>
+                            <span class="suggestion-label"><i data-lucide="code" class="suggestion-icon"></i> Coding</span>
+                        </div>
+                        <div class="suggestion-card" onclick="chat.useSuggestion('Explain quantum computing principles in simple terms for a high school student.')">
+                            <span class="suggestion-text">Explain quantum computing simply</span>
+                            <span class="suggestion-label"><i data-lucide="book-open" class="suggestion-icon"></i> Learning</span>
+                        </div>
+                        <div class="suggestion-card" onclick="chat.useSuggestion('Suggest 5 fun and creative team-building activities for a remote remote-first engineering team.')">
+                            <span class="suggestion-text">Remote team-building activities</span>
+                            <span class="suggestion-label"><i data-lucide="lightbulb" class="suggestion-icon"></i> Brainstorm</span>
+                        </div>
+                        <div class="suggestion-card" onclick="chat.useSuggestion('Compose an email template for professional salary negotiation.')">
+                            <span class="suggestion-text">Salary negotiation email template</span>
+                            <span class="suggestion-label"><i data-lucide="mail" class="suggestion-icon"></i> Professional</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages populate here -->
+                <div id="messages-list"></div>
+            </div>
+            
+            <!-- Message Inputs -->
+            <div class="chat-input-outer-container">
+                <div class="chat-input-wrapper">
+                    <textarea id="chat-input-box" class="chat-textarea" placeholder="Message HEY AI..." rows="1" oninput="ui.autoExpandTextarea(this)"></textarea>
+                    
+                    <div class="chat-input-controls">
+                        <div class="input-util-group" style="align-items: center; gap: 12px;">
+                            <button id="voice-input-btn" class="voice-btn" onclick="chat.toggleVoiceInput()" title="Voice input (Speech to Text)">
+                                <i data-lucide="mic" style="width: 15px; height: 15px;"></i>
+                            </button>
+                            <span id="char-counter">0 chars</span>
+                        </div>
+                        <button id="send-message-btn" class="input-send-btn" onclick="chat.sendMessage()" aria-label="Send message">
+                            <i data-lucide="arrow-up" style="width: 20px; height: 20px;"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chat-disclaimer">
+                    HEY AI can make mistakes. Consider checking important info.
+                </div>
+            </div>
+        </main>
+
+        <!-- ========================================== -->
+        <!-- 4. SETTINGS MODAL DIALOG                   -->
+        <!-- ========================================== -->
+        <div id="settings-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2 id="settings-modal-title" class="modal-title">Settings</h2>
+                    <button class="modal-close-btn" onclick="ui.closeSettings()" aria-label="Close settings">
+                        <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="modal-tabs" role="tablist">
+                        <button id="setting-tab-general" class="modal-tab-btn active" role="tab" aria-selected="true" onclick="ui.switchSettingsTab('general')">General</button>
+                        <button id="setting-tab-api" class="modal-tab-btn" role="tab" aria-selected="false" onclick="ui.switchSettingsTab('api')">AI Configuration</button>
+                    </div>
+                    
+                    <div class="modal-content-area">
+                        <!-- General settings pane -->
+                        <div id="pane-general" class="modal-pane active">
+                            <h3 class="modal-pane-title">General Settings</h3>
+                            <div class="settings-row-horizontal">
+                                <div>
+                                    <div style="font-size: 14.5px; font-weight: 500;">User Profile</div>
+                                    <div id="settings-user-display" class="settings-label-sub">Logged in as: -</div>
+                                </div>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+                            <div class="settings-row-horizontal">
+                                <div>
+                                    <div style="font-size: 14.5px; font-weight: 500;">Theme Accent</div>
+                                    <div class="settings-label-sub">Select your interface accent color</div>
+                                </div>
+                                <select id="settings-accent" class="settings-select" onchange="settings.updateThemeAccent(this.value)">
+                                    <option value="violet">Violet (Default)</option>
+                                    <option value="emerald">Emerald</option>
+                                    <option value="amber">Amber</option>
+                                    <option value="crimson">Crimson</option>
+                                    <option value="slate">Slate</option>
+                                </select>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+                            <div class="settings-row-horizontal">
+                                <div>
+                                    <div style="font-size: 14.5px; font-weight: 500;">Response Speed</div>
+                                    <div class="settings-label-sub">Adjust the speed of the typing animation</div>
+                                </div>
+                                <select id="settings-speed" class="settings-select" onchange="settings.updateSpeed(this.value)">
+                                    <option value="normal">Normal</option>
+                                    <option value="fast">Fast</option>
+                                    <option value="instant">Instant</option>
+                                </select>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+                            <div class="settings-row">
+                                <div style="font-size: 14.5px; font-weight: 500; color: #f87171;">Danger Zone</div>
+                                <div class="settings-label-sub">This action will delete all conversations and cannot be undone.</div>
+                                <button class="danger-zone-btn" onclick="db.clearAllChatsForUser()">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                    <span>Delete All Conversations</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- AI settings pane -->
+                        <div id="pane-api" class="modal-pane">
+                            <h3 class="modal-pane-title">AI Engine Settings</h3>
+                            
+                            <div class="settings-row">
+                                <label for="settings-provider" style="font-size: 14px; font-weight: 500;">API Provider</label>
+                                <select id="settings-provider" class="settings-select" style="width: 100%;" onchange="settings.updateProvider(this.value)">
+                                    <option value="demo">Demo Mode (Simulated Replies)</option>
+                                    <option value="openai">OpenAI API</option>
+                                    <option value="gemini">Google Gemini API</option>
+                                </select>
+                            </div>
+                            
+                            <div id="openai-key-group" class="settings-row" style="display: none;">
+                                <label for="settings-api-key" style="font-size: 14px; font-weight: 500;">OpenAI API Key</label>
+                                <div class="auth-input-wrapper">
+                                    <i data-lucide="key" class="auth-input-icon"></i>
+                                    <input type="password" id="settings-api-key" class="auth-input" placeholder="sk-..." style="padding-left: 42px;" onchange="settings.updateApiKey(this.value)">
+                                </div>
+                                <span class="settings-label-sub">Your key is stored securely in your browser's localStorage and is sent directly to OpenAI.</span>
+                            </div>
+                            
+                            <div id="gemini-key-group" class="settings-row" style="display: none;">
+                                <label for="settings-gemini-key" style="font-size: 14px; font-weight: 500;">Google Gemini API Key</label>
+                                <div class="auth-input-wrapper">
+                                    <i data-lucide="key" class="auth-input-icon"></i>
+                                    <input type="password" id="settings-gemini-key" class="auth-input" placeholder="AIzaSy..." style="padding-left: 42px;" onchange="settings.updateGeminiKey(this.value)">
+                                </div>
+                                <span class="settings-label-sub">Your key is stored securely in your browser's localStorage and is sent directly to Google.</span>
+                            </div>
+                            
+                            <div id="model-select-group" class="settings-row" style="display: none;">
+                                <label for="settings-model" style="font-size: 14px; font-weight: 500;">Preferred Model</label>
+                                <select id="settings-model" class="settings-select" style="width: 100%;" onchange="settings.updateModel(this.value)">
+                                    <!-- Loaded dynamically based on provider selection -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- main app scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
